@@ -7,6 +7,7 @@ import com.learning.microservice.product.domain.ProductRepository;
 import com.learning.microservice.product.web.ProductMapper;
 import com.learning.microservice.product.web.dto.CreateProductRequest;
 import com.learning.microservice.product.web.dto.ProductResponse;
+import com.learning.microservice.product.web.dto.StockReservationResponse;
 import com.learning.microservice.product.web.dto.UpdateProductRequest;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +60,25 @@ public class ProductService {
                 () -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
     mapper.update(req, product);
     return mapper.toResponse(product);
+  }
+
+  // Decrements stock atomically; evicts cache so subsequent reads see the new level.
+  // Throws PRODUCT_NOT_FOUND / PRODUCT_OUT_OF_STOCK. Used by order-service over REST.
+  @CacheEvict(value = CACHE_NAME, key = "#id")
+  public StockReservationResponse reserveStock(UUID id, int quantity) {
+    Product product =
+        products
+            .findById(id)
+            .orElseThrow(
+                () -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
+    if (product.getStock() < quantity) {
+      throw new BusinessException(
+          ErrorCode.PRODUCT_OUT_OF_STOCK,
+          "Insufficient stock for product " + id + " (requested " + quantity + ")");
+    }
+    product.setStock(product.getStock() - quantity);
+    return new StockReservationResponse(
+        product.getId(), quantity, product.getStock(), product.getPriceCents());
   }
 
   @CacheEvict(value = CACHE_NAME, key = "#id")

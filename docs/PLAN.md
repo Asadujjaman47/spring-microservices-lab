@@ -175,12 +175,12 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Flyway `R__seed_*.sql` for demo data (active in `local`/`docker`).
 
 ### Phase 4 — Async messaging + resilience
-- [ ] `order-service`: place-order flow at `/api/v1/orders`.
-- [ ] Sync call to `product-service` for stock reservation via `RestClient` + Eureka load balancer.
-- [ ] **Resilience4j** circuit breaker + fallback on the stock-reservation call.
-- [ ] Publish `OrderCreatedV1` (JSON) to topic exchange `domain.events`, routing key `order.created`.
-- [ ] `notification-service` consumes with **manual ack**, DLQ + exponential backoff, idempotent via event-id dedupe table.
-- [ ] Integration test covers full cross-service flow with Awaitility.
+- [x] `order-service`: place-order flow at `/api/v1/orders`.
+- [x] Sync call to `product-service` for stock reservation via `RestClient` + Eureka load balancer.
+- [x] **Resilience4j** circuit breaker + fallback on the stock-reservation call.
+- [x] Publish `OrderCreatedV1` (JSON) to topic exchange `domain.events`, routing key `order.created`.
+- [x] `notification-service` consumes with **manual ack**, DLQ + exponential backoff, idempotent via event-id dedupe table.
+- [x] Integration test covers full cross-service flow with Awaitility.
 
 ### Phase 5 — Gateway + security
 - [ ] Spring Cloud Gateway MVC: routes via `lb://user-service` etc.
