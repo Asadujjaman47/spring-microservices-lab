@@ -17,7 +17,9 @@
   <description>Learning project: Spring Boot microservices with Redis, RabbitMQ, Eureka, and Spring Cloud Config.</description>
 
   <!-- Modules added per phase: common-lib (Phase 1), config/discovery/user (Phase 2), etc. -->
-  <modules/>
+  <modules>
+    <module>common-lib</module>
+  </modules>
 
   <properties>
     <java.version>21</java.version>
@@ -32,6 +34,8 @@
     <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
     <spring-dotenv.version>4.0.0</spring-dotenv.version>
     <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
+    <java-uuid-generator.version>5.1.0</java-uuid-generator.version>
+    <jjwt.version>0.12.6</jjwt.version>
 
     <spotless-maven-plugin.version>2.44.0</spotless-maven-plugin.version>
     <google-java-format.version>1.24.0</google-java-format.version>
@@ -71,6 +75,32 @@
         <groupId>net.logstash.logback</groupId>
         <artifactId>logstash-logback-encoder</artifactId>
         <version>${logstash-logback-encoder.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.uuid</groupId>
+        <artifactId>java-uuid-generator</artifactId>
+        <version>${java-uuid-generator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.learning.microservice</groupId>
+        <artifactId>common-lib</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
