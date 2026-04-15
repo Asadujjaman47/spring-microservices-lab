@@ -141,15 +141,15 @@ src/main/java/.../<service>/
 
 ### Phase 0 — Project Bootstrap (one-time setup)
 Runs **before any code**. Establishes the repo + branch structure so every later commit is tracked from the start.
-- [ ] `git init`.
-- [ ] Add `.gitignore` (Java, Maven `target/`, IntelliJ `.idea/`, `.env`, logs, build artifacts).
-- [ ] Add `LICENSE` (MIT) and `.editorconfig` (UTF-8, LF, 4-space Java / 2-space YAML).
-- [ ] Seed `docs/adr/0000-template.md` for future ADRs.
-- [ ] First commit on `main`: `docs(plan): initial project plan and workflow` (includes `docs/PLAN.md`, `.gitignore`, `LICENSE`, `.editorconfig`).
-- [ ] Create long-lived `develop` branch off `main`.
-- [ ] Tag `v0.0.0` on `main` (baseline marker, optional).
-- [ ] Push to GitHub; enable branch protection on `main` and `develop` (require PR, require checks, no direct commits).
-- [ ] Branch `feature/p1-foundation` off `develop` — Phase 1 work starts here.
+- [x] `git init`.
+- [x] Add `.gitignore` (Java, Maven `target/`, IntelliJ `.idea/`, `.env`, logs, build artifacts).
+- [x] Add `LICENSE` (MIT) and `.editorconfig` (UTF-8, LF, 4-space Java / 2-space YAML).
+- [x] Seed `docs/adr/0000-template.md` for future ADRs.
+- [x] First commit on `main`: `docs(plan): initial project plan and workflow` (includes `docs/PLAN.md`, `.gitignore`, `LICENSE`, `.editorconfig`).
+- [x] Create long-lived `develop` branch off `main`.
+- [x] Tag `v0.0.0` on `main` (baseline marker, optional).
+- [x] Push to GitHub; enable branch protection on `main` and `develop` (require PR, require checks, no direct commits).
+- [x] Branch `feature/p1-foundation` off `develop` — Phase 1 work starts here.
 
 **Acceptance:** `git log --oneline --all` shows the initial commit on `main` and `develop`; branch protection is active on GitHub.
 
