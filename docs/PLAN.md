@@ -141,24 +141,24 @@ src/main/java/.../<service>/
 
 ### Phase 0 — Project Bootstrap (one-time setup)
 Runs **before any code**. Establishes the repo + branch structure so every later commit is tracked from the start.
-- [ ] `git init`.
-- [ ] Add `.gitignore` (Java, Maven `target/`, IntelliJ `.idea/`, `.env`, logs, build artifacts).
-- [ ] Add `LICENSE` (MIT) and `.editorconfig` (UTF-8, LF, 4-space Java / 2-space YAML).
-- [ ] Seed `docs/adr/0000-template.md` for future ADRs.
-- [ ] First commit on `main`: `docs(plan): initial project plan and workflow` (includes `docs/PLAN.md`, `.gitignore`, `LICENSE`, `.editorconfig`).
-- [ ] Create long-lived `develop` branch off `main`.
-- [ ] Tag `v0.0.0` on `main` (baseline marker, optional).
-- [ ] Push to GitHub; enable branch protection on `main` and `develop` (require PR, require checks, no direct commits).
-- [ ] Branch `feature/p1-foundation` off `develop` — Phase 1 work starts here.
+- [x] `git init`.
+- [x] Add `.gitignore` (Java, Maven `target/`, IntelliJ `.idea/`, `.env`, logs, build artifacts).
+- [x] Add `LICENSE` (MIT) and `.editorconfig` (UTF-8, LF, 4-space Java / 2-space YAML).
+- [x] Seed `docs/adr/0000-template.md` for future ADRs.
+- [x] First commit on `main`: `docs(plan): initial project plan and workflow` (includes `docs/PLAN.md`, `.gitignore`, `LICENSE`, `.editorconfig`).
+- [x] Create long-lived `develop` branch off `main`.
+- [x] Tag `v0.0.0` on `main` (baseline marker, optional).
+- [x] Push to GitHub; enable branch protection on `main` and `develop` (require PR, require checks, no direct commits).
+- [x] Branch `feature/p1-foundation` off `develop` — Phase 1 work starts here.
 
 **Acceptance:** `git log --oneline --all` shows the initial commit on `main` and `develop`; branch protection is active on GitHub.
 
 ### Phase 1 — Foundation (skeleton + infra)
-- [ ] Parent `pom.xml` with Spring Boot 3.5.13 BOM, Spring Cloud 2025.0.0 BOM, Java 21, Lombok, MapStruct, Spotless + Google Java Format, `spring-boot:build-image` goal.
-- [ ] `docker-compose.yml` with Postgres 18.3 (single container, init SQL creates `userdb`/`productdb`/`orderdb`), Redis 8.2, RabbitMQ 4.1 + management UI, **Zipkin**, **pgAdmin**. Internal-only network for business services.
-- [ ] `.env.example` documenting every required variable (DB creds, JWT secret, RabbitMQ creds).
-- [ ] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, correlation-ID filter, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config.
-- [ ] Top-level `README.md` with quickstart.
+- [x] Parent `pom.xml` with Spring Boot 3.5.13 BOM, Spring Cloud 2025.0.0 BOM, Java 21, Lombok, MapStruct, Spotless + Google Java Format, `spring-boot:build-image` goal.
+- [x] `docker-compose.yml` with Postgres 18.3 (single container, init SQL creates `userdb`/`productdb`/`orderdb`), Redis 8.2, RabbitMQ 4.1 + management UI, **Zipkin**, **pgAdmin**. Internal-only network for business services.
+- [x] `.env.example` documenting every required variable (DB creds, JWT secret, RabbitMQ creds).
+- [x] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, correlation-ID filter, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config.
+- [x] Top-level `README.md` with quickstart.
 
 ### Phase 2 — Platform services (config + discovery + bus)
 - [ ] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
