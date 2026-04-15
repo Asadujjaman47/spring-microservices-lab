@@ -1,0 +1,62 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# Logs
+logs/
+*.log
+spring.log
+
+# Build
+build/
+out/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.pid
+*.swp
+*.swo
+*~
+
+# HTTP client private env (contains tokens)
+docs/http/http-client.private.env.json
+docs/http/.idea/
