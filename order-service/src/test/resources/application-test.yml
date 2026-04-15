@@ -1,0 +1,34 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: ""
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.bus.BusAutoConfiguration
+
+eureka:
+  client:
+    enabled: false
+
+# Test circuit breaker — tighter window so the open-state test doesn't need dozens of calls.
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 4
+        minimum-number-of-calls: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 1
+        automatic-transition-from-open-to-half-open-enabled: false
+        ignore-exceptions:
+          - com.learning.microservice.common.error.BusinessException

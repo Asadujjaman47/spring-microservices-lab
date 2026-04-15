@@ -4,6 +4,8 @@ import com.learning.microservice.common.api.ApiResponse;
 import com.learning.microservice.product.service.ProductService;
 import com.learning.microservice.product.web.dto.CreateProductRequest;
 import com.learning.microservice.product.web.dto.ProductResponse;
+import com.learning.microservice.product.web.dto.ReserveStockRequest;
+import com.learning.microservice.product.web.dto.StockReservationResponse;
 import com.learning.microservice.product.web.dto.UpdateProductRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -55,5 +57,11 @@ public class ProductController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable UUID id) {
     products.delete(id);
+  }
+
+  @PostMapping("/{id}/reservations")
+  public ApiResponse<StockReservationResponse> reserveStock(
+      @PathVariable UUID id, @Valid @RequestBody ReserveStockRequest req) {
+    return ApiResponse.ok(products.reserveStock(id, req.quantity()), "Stock reserved");
   }
 }

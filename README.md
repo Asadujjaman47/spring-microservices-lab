@@ -44,6 +44,8 @@ java -jar config-service/target/config-service-0.1.0-SNAPSHOT.jar               
 java -jar discovery-service/target/discovery-service-0.1.0-SNAPSHOT.jar                # :8761
 SPRING_PROFILES_ACTIVE=local java -jar user-service/target/user-service-0.1.0-SNAPSHOT.jar        # :8081
 SPRING_PROFILES_ACTIVE=local java -jar product-service/target/product-service-0.1.0-SNAPSHOT.jar  # :8082
+SPRING_PROFILES_ACTIVE=local java -jar order-service/target/order-service-0.1.0-SNAPSHOT.jar      # :8083
+SPRING_PROFILES_ACTIVE=local java -jar notification-service/target/notification-service-0.1.0-SNAPSHOT.jar  # :8084
 ```
 
 `SPRING_PROFILES_ACTIVE=local` on the business services activates `db/seed/` repeatable migrations that ship demo users + products.
@@ -54,6 +56,13 @@ curl http://localhost:8888/user-service/default         # config served
 curl http://localhost:8081/api/v1/users                 # seeded users
 curl http://localhost:8082/api/v1/products              # seeded products
 curl -X POST http://localhost:8081/actuator/busrefresh  # broadcast refresh over RabbitMQ
+
+# Place an order → watch notification-service logs for the consumed event:
+PRODUCT_ID=$(curl -s http://localhost:8082/api/v1/products | jq -r '.data[0].id')
+USER_ID=$(curl -s http://localhost:8081/api/v1/users | jq -r '.data[0].id')
+curl -X POST http://localhost:8083/api/v1/orders \
+  -H "Content-Type: application/json" \
+  -d "{\"userId\":\"$USER_ID\",\"productId\":\"$PRODUCT_ID\",\"quantity\":1}"
 ```
 
 ### Per-service OpenAPI / Swagger
@@ -62,6 +71,7 @@ curl -X POST http://localhost:8081/actuator/busrefresh  # broadcast refresh over
 |---|---|
 | user-service | <http://localhost:8081/swagger-ui.html> |
 | product-service | <http://localhost:8082/swagger-ui.html> |
+| order-service | <http://localhost:8083/swagger-ui.html> |
 
 ### UIs (local)
 
@@ -84,6 +94,7 @@ The Postgres container auto-creates three databases on first boot, each with its
 | `userdb` | `userdb_user` | user-service |
 | `productdb` | `productdb_user` | product-service |
 | `orderdb` | `orderdb_user` | order-service |
+| `notificationdb` | `notificationdb_user` | notification-service (dedupe table) |
 
 Passwords come from `.env` — see `.env.example` for the variable names.
 
@@ -100,6 +111,8 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 ├── discovery-service/         # Netflix Eureka Server (:8761)
 ├── user-service/              # users CRUD, BCrypt (:8081)
 ├── product-service/           # products CRUD, Redis @Cacheable (:8082)
+├── order-service/             # order placement, Resilience4j CB, event publisher (:8083)
+├── notification-service/      # event consumer, DLQ + idempotency (:8084)
 ├── scripts/                   # smoke scripts
 └── docs/
     ├── PLAN.md                # authoritative plan
@@ -115,7 +128,7 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 
 ## Status
 
-Phase 3 (persistence + caching + testing) complete — user-service and product-service expose CRUD, with Postgres + Flyway migrations, BCrypt password hashing (user-service), and Redis read-through caching with 5-minute TTL (product-service). Testcontainers covers both with integration tests. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
+Phase 4 (async messaging + resilience) complete — order-service places orders over a Eureka-load-balanced `RestClient` to product-service, wraps the stock-reservation call in a Resilience4j circuit breaker with a degraded-fallback, and publishes `OrderCreatedV1` to the `domain.events` topic exchange after commit. notification-service consumes with idempotent dedupe (PK on `event_id`), Spring AMQP retry (exponential backoff, 3 attempts), and a dead-letter queue on final failure. Testcontainers integration tests cover the happy path (Awaitility-verified event publish/consume), CB fallback, duplicate dedupe, and DLQ routing. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
 
 ## License
 

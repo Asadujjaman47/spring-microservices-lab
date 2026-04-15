@@ -6,13 +6,15 @@ set -euo pipefail
 : "${USERDB_PASSWORD:=userdb_pass}"
 : "${PRODUCTDB_PASSWORD:=productdb_pass}"
 : "${ORDERDB_PASSWORD:=orderdb_pass}"
+: "${NOTIFICATIONDB_PASSWORD:=notificationdb_pass}"
 
 psql -v ON_ERROR_STOP=1 \
      --username "$POSTGRES_USER" \
      --dbname "$POSTGRES_DB" \
      -v userdb_pw="$USERDB_PASSWORD" \
      -v productdb_pw="$PRODUCTDB_PASSWORD" \
-     -v orderdb_pw="$ORDERDB_PASSWORD" <<-'EOSQL'
+     -v orderdb_pw="$ORDERDB_PASSWORD" \
+     -v notificationdb_pw="$NOTIFICATIONDB_PASSWORD" <<-'EOSQL'
     CREATE USER userdb_user WITH PASSWORD :'userdb_pw';
     CREATE DATABASE userdb OWNER userdb_user;
 
@@ -21,4 +23,7 @@ psql -v ON_ERROR_STOP=1 \
 
     CREATE USER orderdb_user WITH PASSWORD :'orderdb_pw';
     CREATE DATABASE orderdb OWNER orderdb_user;
+
+    CREATE USER notificationdb_user WITH PASSWORD :'notificationdb_pw';
+    CREATE DATABASE notificationdb OWNER notificationdb_user;
 EOSQL
