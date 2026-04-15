@@ -17,7 +17,7 @@ Build a small but realistic e-commerce order system to learn microservice patter
 | Discovery | Netflix Eureka | 2025.0.0 | Service registry + client-side LB |
 | Gateway | Spring Cloud Gateway (MVC) | 2025.0.0 | Edge routing, filters, rate limiting |
 | Mapping | MapStruct | 1.6.3 | Compile-time DTO ↔ entity mapping |
-| Boilerplate | Lombok | 1.18.34 | Reduce getter/setter/builder noise |
+| Boilerplate | Lombok | 1.18.36 | Reduce getter/setter/builder noise |
 | Env loading | `spring-dotenv` | 4.0.0 | `.env` support in `application.yml` |
 | Containers | Docker + Docker Compose v2 | — | One-command local stack |
 | Migrations | Flyway | 11.x | Versioned per-service migrations |
@@ -116,6 +116,7 @@ Redis-RabbitMQ-Micro-service/
 ├── order-service/
 ├── notification-service/
 ├── config-repo/                # git-backed config (see Config repo section)
+├── docker/                     # infra side-files (Postgres init SQL, etc.)
 ├── scripts/                    # smoke.sh, migration helpers, etc.
 └── docs/
     ├── PLAN.md
