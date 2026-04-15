@@ -17,7 +17,7 @@ Build a small but realistic e-commerce order system to learn microservice patter
 | Discovery | Netflix Eureka | 2025.0.0 | Service registry + client-side LB |
 | Gateway | Spring Cloud Gateway (MVC) | 2025.0.0 | Edge routing, filters, rate limiting |
 | Mapping | MapStruct | 1.6.3 | Compile-time DTO ↔ entity mapping |
-| Boilerplate | Lombok | 1.18.34 | Reduce getter/setter/builder noise |
+| Boilerplate | Lombok | 1.18.36 | Reduce getter/setter/builder noise |
 | Env loading | `spring-dotenv` | 4.0.0 | `.env` support in `application.yml` |
 | Containers | Docker + Docker Compose v2 | — | One-command local stack |
 | Migrations | Flyway | 11.x | Versioned per-service migrations |
@@ -116,6 +116,7 @@ Redis-RabbitMQ-Micro-service/
 ├── order-service/
 ├── notification-service/
 ├── config-repo/                # git-backed config (see Config repo section)
+├── docker/                     # infra side-files (Postgres init SQL, etc.)
 ├── scripts/                    # smoke.sh, migration helpers, etc.
 └── docs/
     ├── PLAN.md
@@ -161,10 +162,10 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Top-level `README.md` with quickstart.
 
 ### Phase 2 — Platform services (config + discovery + bus)
-- [ ] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
-- [ ] `discovery-service` (Eureka Server, self-preservation off in dev).
-- [ ] **Spring Cloud Bus + RabbitMQ** wired so `/actuator/busrefresh` broadcasts config changes.
-- [ ] Minimal `user-service` stub that pulls config from config-service and registers with Eureka — proves the platform works.
+- [x] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
+- [x] `discovery-service` (Eureka Server, self-preservation off in dev).
+- [x] **Spring Cloud Bus + RabbitMQ** wired so `/actuator/busrefresh` broadcasts config changes.
+- [x] Minimal `user-service` stub that pulls config from config-service and registers with Eureka — proves the platform works.
 
 ### Phase 3 — Persistence + caching + testing
 - [ ] `user-service` end-to-end: `/api/v1/users` — entity → Flyway migration → repo → service → MapStruct mapper → controller → Swagger, BCrypt password hashing.
