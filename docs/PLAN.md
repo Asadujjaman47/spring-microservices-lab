@@ -168,11 +168,11 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Minimal `user-service` stub that pulls config from config-service and registers with Eureka — proves the platform works.
 
 ### Phase 3 — Persistence + caching + testing
-- [ ] `user-service` end-to-end: `/api/v1/users` — entity → Flyway migration → repo → service → MapStruct mapper → controller → Swagger, BCrypt password hashing.
-- [ ] `product-service` with CRUD + Redis `@Cacheable` via Lettuce, cache eviction on update/delete, TTL 5m.
-- [ ] Verify cache via `redis-cli MONITOR`.
-- [ ] **Testcontainers** introduced: `AbstractIntegrationTest` base class; first `@SpringBootTest` with `@ServiceConnection` for Postgres + Redis.
-- [ ] Flyway `R__seed_*.sql` for demo data (active in `local`/`docker`).
+- [x] `user-service` end-to-end: `/api/v1/users` — entity → Flyway migration → repo → service → MapStruct mapper → controller → Swagger, BCrypt password hashing.
+- [x] `product-service` with CRUD + Redis `@Cacheable` via Lettuce, cache eviction on update/delete, TTL 5m.
+- [x] Verify cache via `redis-cli MONITOR`.
+- [x] **Testcontainers** introduced: `AbstractIntegrationTest` base class; first `@SpringBootTest` with `@ServiceConnection` for Postgres + Redis.
+- [x] Flyway `R__seed_*.sql` for demo data (active in `local`/`docker`).
 
 ### Phase 4 — Async messaging + resilience
 - [ ] `order-service`: place-order flow at `/api/v1/orders`.
