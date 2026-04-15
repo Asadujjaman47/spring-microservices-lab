@@ -19,6 +19,9 @@
   <!-- Modules added per phase: common-lib (Phase 1), config/discovery/user (Phase 2), etc. -->
   <modules>
     <module>common-lib</module>
+    <module>config-service</module>
+    <module>discovery-service</module>
+    <module>user-service</module>
   </modules>
 
   <properties>

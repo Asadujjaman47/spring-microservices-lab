@@ -162,10 +162,10 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Top-level `README.md` with quickstart.
 
 ### Phase 2 — Platform services (config + discovery + bus)
-- [ ] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
-- [ ] `discovery-service` (Eureka Server, self-preservation off in dev).
-- [ ] **Spring Cloud Bus + RabbitMQ** wired so `/actuator/busrefresh` broadcasts config changes.
-- [ ] Minimal `user-service` stub that pulls config from config-service and registers with Eureka — proves the platform works.
+- [x] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
+- [x] `discovery-service` (Eureka Server, self-preservation off in dev).
+- [x] **Spring Cloud Bus + RabbitMQ** wired so `/actuator/busrefresh` broadcasts config changes.
+- [x] Minimal `user-service` stub that pulls config from config-service and registers with Eureka — proves the platform works.
 
 ### Phase 3 — Persistence + caching + testing
 - [ ] `user-service` end-to-end: `/api/v1/users` — entity → Flyway migration → repo → service → MapStruct mapper → controller → Swagger, BCrypt password hashing.
