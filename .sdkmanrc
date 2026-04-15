@@ -1,0 +1,3 @@
+# Enable auto-env through the sdkman_auto_env config
+# Toggle with: sdk config (set sdkman_auto_env=true)
+java=21.0.4-tem
