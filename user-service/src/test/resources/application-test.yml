@@ -1,0 +1,22 @@
+# Disable infra dependencies the service normally talks to — Testcontainers
+# brings up Postgres on its own; Rabbit/Eureka/Config aren't needed for these tests.
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: ""
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.cloud.bus.BusAutoConfiguration
+
+eureka:
+  client:
+    enabled: false

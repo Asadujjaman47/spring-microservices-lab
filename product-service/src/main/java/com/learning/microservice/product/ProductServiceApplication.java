@@ -1,16 +1,16 @@
-package com.learning.microservice.user;
+package com.learning.microservice.product;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-// @EnableJpaAuditing activates BaseEntity's @CreatedDate / @LastModifiedDate / @CreatedBy /
-// @LastModifiedBy.
 @SpringBootApplication
 @EnableJpaAuditing
-public class UserServiceApplication {
+@EnableCaching
+public class ProductServiceApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(UserServiceApplication.class, args);
+    SpringApplication.run(ProductServiceApplication.class, args);
   }
 }
