@@ -154,11 +154,11 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 **Acceptance:** `git log --oneline --all` shows the initial commit on `main` and `develop`; branch protection is active on GitHub.
 
 ### Phase 1 — Foundation (skeleton + infra)
-- [ ] Parent `pom.xml` with Spring Boot 3.5.13 BOM, Spring Cloud 2025.0.0 BOM, Java 21, Lombok, MapStruct, Spotless + Google Java Format, `spring-boot:build-image` goal.
-- [ ] `docker-compose.yml` with Postgres 18.3 (single container, init SQL creates `userdb`/`productdb`/`orderdb`), Redis 8.2, RabbitMQ 4.1 + management UI, **Zipkin**, **pgAdmin**. Internal-only network for business services.
-- [ ] `.env.example` documenting every required variable (DB creds, JWT secret, RabbitMQ creds).
-- [ ] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, correlation-ID filter, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config.
-- [ ] Top-level `README.md` with quickstart.
+- [x] Parent `pom.xml` with Spring Boot 3.5.13 BOM, Spring Cloud 2025.0.0 BOM, Java 21, Lombok, MapStruct, Spotless + Google Java Format, `spring-boot:build-image` goal.
+- [x] `docker-compose.yml` with Postgres 18.3 (single container, init SQL creates `userdb`/`productdb`/`orderdb`), Redis 8.2, RabbitMQ 4.1 + management UI, **Zipkin**, **pgAdmin**. Internal-only network for business services.
+- [x] `.env.example` documenting every required variable (DB creds, JWT secret, RabbitMQ creds).
+- [x] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, correlation-ID filter, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config.
+- [x] Top-level `README.md` with quickstart.
 
 ### Phase 2 — Platform services (config + discovery + bus)
 - [ ] `config-service` with git-backed `config-repo/` (`native` profile for local, `git` via `file://` for docker/prod).
