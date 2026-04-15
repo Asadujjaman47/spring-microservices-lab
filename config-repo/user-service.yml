@@ -1,0 +1,7 @@
+server:
+  port: 8081
+
+# Demo property — refreshed at runtime via /actuator/busrefresh,
+# consumed by UserServiceApplication's @RefreshScope greeting endpoint.
+demo:
+  greeting: "Hello from config-service (default)"

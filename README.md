@@ -35,10 +35,29 @@ docker compose up -d                 # brings up Postgres/Redis/RabbitMQ/Zipkin/
 ./mvnw verify                        # builds every module, runs tests + Spotless
 ```
 
-### Infra UIs (local)
+### Run the platform (local JVM)
+
+Services must start in order — `config-service` first (others pull their config from it), then `discovery-service`, then business services.
+
+```bash
+java -jar config-service/target/config-service-0.1.0-SNAPSHOT.jar        # :8888
+java -jar discovery-service/target/discovery-service-0.1.0-SNAPSHOT.jar  # :8761
+java -jar user-service/target/user-service-0.1.0-SNAPSHOT.jar            # :8081
+```
+
+Smoke test:
+```bash
+curl http://localhost:8888/user-service/default      # config served
+curl http://localhost:8081/api/v1/greeting           # config-driven response
+curl -X POST http://localhost:8081/actuator/busrefresh   # broadcast refresh over RabbitMQ
+```
+
+### UIs (local)
 
 | Tool | URL | Default creds |
 |---|---|---|
+| Eureka dashboard | <http://localhost:8761> | — |
+| Config Server | <http://localhost:8888/actuator> | — |
 | pgAdmin | <http://localhost:5050> | `admin@local.dev` / `admin` |
 | RabbitMQ management | <http://localhost:15672> | `guest` / `guest` |
 | Zipkin | <http://localhost:9411> | — |
@@ -65,8 +84,10 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 ├── docker/postgres/init/      # first-boot DB provisioning
 ├── pom.xml                    # parent: Boot + Cloud BOMs, Spotless
 ├── common-lib/                # shared envelope, errors, tracing, JWT, auditing
-├── config-repo/               # git-backed Spring Cloud Config (Phase 2)
-├── <service>/                 # per-service modules (added per phase)
+├── config-repo/               # Spring Cloud Config source (native/git)
+├── config-service/            # Spring Cloud Config Server (:8888)
+├── discovery-service/         # Netflix Eureka Server (:8761)
+├── user-service/              # business service stub (:8081) — grows in Phase 3
 ├── scripts/                   # smoke scripts
 └── docs/
     ├── PLAN.md                # authoritative plan
@@ -82,7 +103,7 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 
 ## Status
 
-Phase 1 (foundation) in progress — see the checklist in [`docs/PLAN.md`](docs/PLAN.md).
+Phase 2 (platform services) complete — config server, Eureka, and Cloud Bus over RabbitMQ are wired up and verified end-to-end. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
 
 ## License
 

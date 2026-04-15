@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: user-service
+  config:
+    # Pulls user-service.yml (+ shared application.yml) from config-service at boot.
+    # `optional:` so the service can still start for tests when no config server is up.
+    import: "optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}"
+  cloud:
+    config:
+      fail-fast: false

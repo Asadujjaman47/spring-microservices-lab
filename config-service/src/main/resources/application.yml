@@ -1,0 +1,43 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:native}
+  cloud:
+    config:
+      server:
+        native:
+          # Resolved against JVM cwd. Covers both "run from repo root" and "run from config-service/".
+          search-locations: file:./config-repo,file:../config-repo,classpath:/config-repo
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,busrefresh,refresh
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: git
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_REPO_URI:file:///config-repo}
+          default-label: ${CONFIG_REPO_BRANCH:main}
+          clone-on-start: true
