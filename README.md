@@ -40,17 +40,28 @@ docker compose up -d                 # brings up Postgres/Redis/RabbitMQ/Zipkin/
 Services must start in order — `config-service` first (others pull their config from it), then `discovery-service`, then business services.
 
 ```bash
-java -jar config-service/target/config-service-0.1.0-SNAPSHOT.jar        # :8888
-java -jar discovery-service/target/discovery-service-0.1.0-SNAPSHOT.jar  # :8761
-java -jar user-service/target/user-service-0.1.0-SNAPSHOT.jar            # :8081
+java -jar config-service/target/config-service-0.1.0-SNAPSHOT.jar                      # :8888
+java -jar discovery-service/target/discovery-service-0.1.0-SNAPSHOT.jar                # :8761
+SPRING_PROFILES_ACTIVE=local java -jar user-service/target/user-service-0.1.0-SNAPSHOT.jar        # :8081
+SPRING_PROFILES_ACTIVE=local java -jar product-service/target/product-service-0.1.0-SNAPSHOT.jar  # :8082
 ```
+
+`SPRING_PROFILES_ACTIVE=local` on the business services activates `db/seed/` repeatable migrations that ship demo users + products.
 
 Smoke test:
 ```bash
-curl http://localhost:8888/user-service/default      # config served
-curl http://localhost:8081/api/v1/greeting           # config-driven response
-curl -X POST http://localhost:8081/actuator/busrefresh   # broadcast refresh over RabbitMQ
+curl http://localhost:8888/user-service/default         # config served
+curl http://localhost:8081/api/v1/users                 # seeded users
+curl http://localhost:8082/api/v1/products              # seeded products
+curl -X POST http://localhost:8081/actuator/busrefresh  # broadcast refresh over RabbitMQ
 ```
+
+### Per-service OpenAPI / Swagger
+
+| Service | Swagger UI |
+|---|---|
+| user-service | <http://localhost:8081/swagger-ui.html> |
+| product-service | <http://localhost:8082/swagger-ui.html> |
 
 ### UIs (local)
 
@@ -87,7 +98,8 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 ├── config-repo/               # Spring Cloud Config source (native/git)
 ├── config-service/            # Spring Cloud Config Server (:8888)
 ├── discovery-service/         # Netflix Eureka Server (:8761)
-├── user-service/              # business service stub (:8081) — grows in Phase 3
+├── user-service/              # users CRUD, BCrypt (:8081)
+├── product-service/           # products CRUD, Redis @Cacheable (:8082)
 ├── scripts/                   # smoke scripts
 └── docs/
     ├── PLAN.md                # authoritative plan
@@ -103,7 +115,7 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 
 ## Status
 
-Phase 2 (platform services) complete — config server, Eureka, and Cloud Bus over RabbitMQ are wired up and verified end-to-end. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
+Phase 3 (persistence + caching + testing) complete — user-service and product-service expose CRUD, with Postgres + Flyway migrations, BCrypt password hashing (user-service), and Redis read-through caching with 5-minute TTL (product-service). Testcontainers covers both with integration tests. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
 
 ## License
 

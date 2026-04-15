@@ -1,14 +1,14 @@
 server:
-  port: 8081
+  port: 8082
 
 spring:
   datasource:
-    url: ${USER_DB_URL:jdbc:postgresql://localhost:5432/userdb}
-    username: ${USER_DB_USERNAME:userdb_user}
-    password: ${USER_DB_PASSWORD:userdb_pass}
+    url: ${PRODUCT_DB_URL:jdbc:postgresql://localhost:5432/productdb}
+    username: ${PRODUCT_DB_USERNAME:productdb_user}
+    password: ${PRODUCT_DB_PASSWORD:productdb_pass}
   jpa:
     hibernate:
-      ddl-auto: validate   # Flyway owns schema; JPA just validates mappings against it.
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
@@ -27,14 +27,19 @@ spring:
       on-profile: local | docker
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 5m           # 5-minute TTL on cached product lookups
+      use-key-prefix: true
+      cache-null-values: false
 
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
-
-# Demo property — refreshed at runtime via /actuator/busrefresh,
-# consumed by the @RefreshScope greeting endpoint.
-demo:
-  greeting: "Hello from config-service (default)"
