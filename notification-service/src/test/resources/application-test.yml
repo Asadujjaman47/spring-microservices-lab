@@ -1,0 +1,30 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: ""
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.bus.BusAutoConfiguration
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: auto
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          initial-interval: 100ms
+          multiplier: 2.0
+          max-attempts: 3
+          max-interval: 500ms
+
+eureka:
+  client:
+    enabled: false

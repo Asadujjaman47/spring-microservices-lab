@@ -26,7 +26,8 @@ public enum ErrorCode {
 
   // Order domain
   ORDER_NOT_FOUND(HttpStatus.NOT_FOUND),
-  ORDER_INVALID_STATE(HttpStatus.CONFLICT);
+  ORDER_INVALID_STATE(HttpStatus.CONFLICT),
+  ORDER_STOCK_RESERVATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE);
 
   private final HttpStatus httpStatus;
 

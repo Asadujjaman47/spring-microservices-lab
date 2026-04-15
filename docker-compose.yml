@@ -17,6 +17,7 @@ services:
       USERDB_PASSWORD: ${USERDB_PASSWORD:-userdb_pass}
       PRODUCTDB_PASSWORD: ${PRODUCTDB_PASSWORD:-productdb_pass}
       ORDERDB_PASSWORD: ${ORDERDB_PASSWORD:-orderdb_pass}
+      NOTIFICATIONDB_PASSWORD: ${NOTIFICATIONDB_PASSWORD:-notificationdb_pass}
     ports:
       - "5432:5432"
     volumes:
