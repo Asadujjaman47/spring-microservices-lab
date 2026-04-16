@@ -90,6 +90,20 @@ class GatewayAuthTests {
     assertThat(ex.getStatusCode()).isNotEqualTo(HttpStatus.UNAUTHORIZED);
   }
 
+  @Test
+  void openApiDocPathIsPublic() {
+    // Aggregated Swagger fetches each service's spec via /v3/api-docs/{service}. The allowlist
+    // must let these through unauthenticated — discovery is disabled in tests so the actual
+    // route won't resolve, but the contract is "never 401".
+    RestClient client = clientBuilder.baseUrl("http://localhost:" + port).build();
+
+    HttpStatusCodeException ex =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            HttpStatusCodeException.class,
+            () -> client.get().uri("/v3/api-docs/user-service").retrieve().toBodilessEntity());
+    assertThat(ex.getStatusCode()).isNotEqualTo(HttpStatus.UNAUTHORIZED);
+  }
+
   private String signToken() {
     SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     long now = System.currentTimeMillis();

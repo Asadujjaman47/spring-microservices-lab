@@ -23,7 +23,8 @@ public class GatewayAuthEnforcementFilter extends OncePerRequestFilter {
           "/actuator/**",
           "/v3/api-docs/**",
           "/swagger-ui/**",
-          "/swagger-ui.html");
+          "/swagger-ui.html",
+          "/webjars/**");
 
   private final AntPathMatcher matcher = new AntPathMatcher();
 

@@ -183,10 +183,10 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Integration test covers full cross-service flow with Awaitility.
 
 ### Phase 5 — Gateway + security
-- [ ] Spring Cloud Gateway MVC: routes via `lb://user-service` etc.
-- [ ] JWT auth filter at gateway (shared HMAC); downstream services validate via `common-lib` filter.
-- [ ] **Redis-backed `RequestRateLimiter`** — 100/min per IP, 1000/min per authenticated user.
-- [ ] **Aggregated Swagger UI** at `localhost:8080/swagger-ui` via springdoc.
+- [x] Spring Cloud Gateway MVC: routes via `lb://user-service` etc.
+- [x] JWT auth filter at gateway (shared HMAC); downstream services validate via `common-lib` filter.
+- [ ] ~~**Redis-backed `RequestRateLimiter`** — 100/min per IP, 1000/min per authenticated user.~~ **Deferred — out of scope for v0.5.0.**
+- [x] **Aggregated Swagger UI** at `localhost:8080/swagger-ui` via springdoc.
 
 ### Phase 6 — Observability + polish
 - [ ] Actuator exposure per profile (open in `local`/`docker`, restricted + basic-auth in `prod`).
@@ -346,7 +346,7 @@ Each phase ends with a runnable demo. Tag `v0.X.0` and merge `develop` → `main
 | **2 — Platform services** | `GET http://localhost:8888/user-service/default` returns config. Eureka dashboard (8761) shows `user-service` registered. `POST /actuator/busrefresh` returns 200. |
 | **3 — Persistence + caching** | `POST /api/v1/users` then `GET` returns it. `GET /api/v1/products/{id}` twice — second call hits Redis (verify via `redis-cli MONITOR`). Testcontainers integration tests green. |
 | **4 — Async messaging** | `POST /api/v1/orders` → notification-service logs the event within seconds. Kill product-service → circuit breaker opens, fallback returned. Poison message lands in DLQ. |
-| **5 — Gateway + security** | All calls go through gateway (8080) with valid JWT. Exceed rate limit → HTTP 429. Aggregated Swagger at `localhost:8080/swagger-ui` shows every service. |
+| **5 — Gateway + security** | All calls go through gateway (8080) with valid JWT. Aggregated Swagger at `localhost:8080/swagger-ui` shows every service. |
 | **6 — Observability + polish** | Open Zipkin, trace a full order flow across 3 services. JSON logs in `docker` profile. CI green on PR. Coverage ≥ 70%. |
 
 ## API Testing & Endpoint Documentation
