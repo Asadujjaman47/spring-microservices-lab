@@ -20,3 +20,12 @@ spring:
 eureka:
   client:
     enabled: false
+
+common:
+  jwt:
+    enabled: true
+    secret: test-secret-that-is-at-least-32-bytes-long-xxxxxx
+
+user:
+  auth:
+    token-ttl-minutes: 60

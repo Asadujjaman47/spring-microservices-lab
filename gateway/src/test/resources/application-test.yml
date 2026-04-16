@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: ""
+
+eureka:
+  client:
+    enabled: false
+
+common:
+  jwt:
+    enabled: true
+    secret: test-secret-that-is-at-least-32-bytes-long-xxxxxx
+
+# Gateway doesn't author its own OpenAPI spec; suppress springdoc auto-scan in tests
+# so the stub @RestController in GatewayAuthTests doesn't leak into a published doc.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

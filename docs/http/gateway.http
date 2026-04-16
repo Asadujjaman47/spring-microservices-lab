@@ -1,0 +1,59 @@
+### Gateway flows — every request goes through :8080 (no direct service hits).
+### IntelliJ's HTTP Client reads the `@name` annotation + `client.global.set(...)`
+### bindings below; adjust or swap for your tool of choice.
+###
+### Prereqs:
+###   docker compose up -d
+###   Start config-service (8888), discovery-service (8761), user/product/order/gateway.
+###   SPRING_PROFILES_ACTIVE=local loads the seed data referenced below.
+
+@gateway = http://localhost:8080
+@ada     = 00000000-0000-7000-8000-000000000001
+@product = 00000000-0000-7000-8000-00000000aa01
+
+
+### 1. Login — gateway allowlists /api/v1/auth/**, so no token is needed here.
+# @name login
+POST {{gateway}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "ada@example.com",
+  "password": "Demo@1234"
+}
+
+> {%
+  client.global.set("token", response.body.data.token);
+%}
+
+
+### 2. List products (JWT enforced by gateway).
+GET {{gateway}}/api/v1/products
+Authorization: Bearer {{token}}
+
+
+### 3. Place an order (JWT enforced; order-service publishes OrderCreatedV1 to RabbitMQ).
+POST {{gateway}}/api/v1/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId":    "{{ada}}",
+  "productId": "{{product}}",
+  "quantity":  1
+}
+
+
+### 4. List the caller's orders.
+GET {{gateway}}/api/v1/orders
+Authorization: Bearer {{token}}
+
+
+### 5. Without a token → 401 from the gateway (enforcement filter).
+GET {{gateway}}/api/v1/orders
+
+
+### 6. Aggregated Swagger — pick a service from the top-right dropdown.
+### UI:   http://localhost:8080/swagger-ui.html
+### Spec: http://localhost:8080/v3/api-docs/user-service
+GET {{gateway}}/v3/api-docs/user-service
