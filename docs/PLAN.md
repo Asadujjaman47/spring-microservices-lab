@@ -10,7 +10,7 @@ Build a small but realistic e-commerce order system to learn microservice patter
 | Framework | Spring Boot | **3.5.13** | Latest 3.5.x, Java 21 baseline |
 | Cloud stack | Spring Cloud | **2025.0.0 (Northfields)** | Compatible with Boot 3.5.x |
 | Build | Maven (multi-module) | 3.9+ | Monorepo of services |
-| DB | PostgreSQL | **18.3** | DB-per-service (`userdb`, `productdb`, `orderdb`) |
+| DB | PostgreSQL | **18.3** | DB-per-service (`userdb`, `productdb`, `orderdb`, `notificationdb`) |
 | Cache | Redis | **8.2** (latest stable) | Read-through cache + distributed locks |
 | Broker | RabbitMQ | **4.1** (latest stable) | Topic/fanout exchanges, event-driven flows |
 | Config server | Spring Cloud Config | 2025.0.0 | Centralized, git-backed configuration |
@@ -66,7 +66,7 @@ Build a small but realistic e-commerce order system to learn microservice patter
 |---|---|---|---|
 | 1 | **config-service** | 8888 | Spring Cloud Config Server; serves `application.yml` per service from a local git repo (`config-repo/`). Starts first. |
 | 2 | **discovery-service** | 8761 | Eureka Server. All business services register here; gateway resolves downstream via `lb://` URIs. |
-| 3 | **gateway** | 8080 | Edge routing, JWT validation, rate limiting, request logging. |
+| 3 | **gateway** | 8080 | Edge routing, JWT validation, request logging. (Rate limiting deferred — see Phase 5.) |
 | 4 | **user-service** | 8081 | Registration, JWT issuance, profile CRUD. Postgres. |
 | 5 | **product-service** | 8082 | Catalog + stock. Postgres + Redis (read-through, TTL 5m). |
 | 6 | **order-service** | 8083 | Creates orders, reserves stock (REST → product-service via Eureka), publishes `OrderCreated` to RabbitMQ. Postgres. |
@@ -203,7 +203,7 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - Cache-aside pattern with Lettuce + invalidation pitfalls.
 - At-least-once delivery, manual acks, idempotent consumers, DLQs.
 - Circuit breakers + fallback (Resilience4j).
-- Gateway concerns: routing via Eureka, JWT, Redis-backed rate limiting, aggregated Swagger.
+- Gateway concerns: routing via Eureka, JWT enforcement, aggregated Swagger. (Redis-backed rate limiting was scoped-in but deferred — see Phase 5.)
 - Distributed tracing: `traceId` from Micrometer → MDC → Zipkin → response envelope.
 - Compile-time mapping with MapStruct (no reflection cost).
 - Lombok boundaries: don't `@Data` on JPA entities.
@@ -240,7 +240,7 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 | 7 | Distributed tracing | **Zipkin** (docker-compose) + Micrometer Tracing bridge. |
 | 8 | Java base package / groupId | `com.learning.microservice`. |
 | 9 | Config repo location | **Subdirectory** `config-repo/` in monorepo. |
-| 10 | DB isolation | **DB-per-service** (`userdb`, `productdb`, `orderdb`) with own creds. |
+| 10 | DB isolation | **DB-per-service** (`userdb`, `productdb`, `orderdb`, `notificationdb`) with own creds. |
 | 11 | common-lib scope | Ships **shared JWT-validation filter + auto-config**. |
 | 12 | Event serialization | **JSON (Jackson)**. |
 | 13 | Dev ergonomics | **Spring Boot DevTools** + **pgAdmin**. |
@@ -257,7 +257,7 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 | 24 | Error code taxonomy | **Central `ErrorCode` enum** in `common-lib`, domain-namespaced. |
 | 25 | Circuit breaker | **Resilience4j** on order → product stock call. |
 | 26 | Swagger | **Aggregated at gateway**, single UI. |
-| 27 | Rate limiting | **Redis-backed `RequestRateLimiter`** at gateway: 100/min IP, 1000/min user. |
+| 27 | Rate limiting | **Redis-backed `RequestRateLimiter`** at gateway: 100/min IP, 1000/min user. *(Deferred in v0.5.0 — see Phase 5.)* |
 | 28 | Seed data | Flyway **`R__seed_*.sql`** in `local`/`docker` only. |
 | 29 | Docker image build | **Spring Boot Cloud Native Buildpacks**. |
 | 30 | Port exposure | **Internal-only** business services; only platform/UI ports on host. |

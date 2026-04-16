@@ -2,6 +2,7 @@ package com.learning.microservice.product.web;
 
 import com.learning.microservice.product.domain.Product;
 import com.learning.microservice.product.web.dto.CreateProductRequest;
+import com.learning.microservice.product.web.dto.PatchProductRequest;
 import com.learning.microservice.product.web.dto.ProductResponse;
 import com.learning.microservice.product.web.dto.UpdateProductRequest;
 import org.mapstruct.BeanMapping;
@@ -31,4 +32,12 @@ public interface ProductMapper {
   @Mapping(target = "createdBy", ignore = true)
   @Mapping(target = "updatedBy", ignore = true)
   void update(UpdateProductRequest req, @MappingTarget Product product);
+
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "updatedBy", ignore = true)
+  void patch(PatchProductRequest req, @MappingTarget Product product);
 }
