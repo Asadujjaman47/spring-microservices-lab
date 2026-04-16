@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: ""
+
+eureka:
+  client:
+    enabled: false
+
+common:
+  jwt:
+    enabled: true
+    secret: test-secret-that-is-at-least-32-bytes-long-xxxxxx

@@ -34,6 +34,18 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+# Defence-in-depth: user-service also parses the shared JWT so controllers can trust
+# request attributes populated by common-lib's JwtAuthenticationFilter.
+common:
+  jwt:
+    enabled: true
+
+user:
+  auth:
+    # JWT lifetime after issuance. 60 minutes is a learning default — production would
+    # pair this with refresh tokens.
+    token-ttl-minutes: ${USER_AUTH_TOKEN_TTL_MINUTES:60}
+
 # Demo property — refreshed at runtime via /actuator/busrefresh,
 # consumed by the @RefreshScope greeting endpoint.
 demo:
