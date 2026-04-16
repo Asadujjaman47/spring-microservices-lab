@@ -6,6 +6,7 @@ import com.learning.microservice.product.domain.Product;
 import com.learning.microservice.product.domain.ProductRepository;
 import com.learning.microservice.product.web.ProductMapper;
 import com.learning.microservice.product.web.dto.CreateProductRequest;
+import com.learning.microservice.product.web.dto.PatchProductRequest;
 import com.learning.microservice.product.web.dto.ProductResponse;
 import com.learning.microservice.product.web.dto.StockReservationResponse;
 import com.learning.microservice.product.web.dto.UpdateProductRequest;
@@ -59,6 +60,17 @@ public class ProductService {
             .orElseThrow(
                 () -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
     mapper.update(req, product);
+    return mapper.toResponse(product);
+  }
+
+  @CacheEvict(value = CACHE_NAME, key = "#id")
+  public ProductResponse patch(UUID id, PatchProductRequest req) {
+    Product product =
+        products
+            .findById(id)
+            .orElseThrow(
+                () -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND, "Product not found"));
+    mapper.patch(req, product);
     return mapper.toResponse(product);
   }
 

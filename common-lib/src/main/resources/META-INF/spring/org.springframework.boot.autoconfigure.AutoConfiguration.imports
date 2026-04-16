@@ -1,1 +1,2 @@
 com.learning.microservice.common.autoconfigure.CommonLibAutoConfiguration
+com.learning.microservice.common.openapi.OpenApiAutoConfiguration

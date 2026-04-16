@@ -47,7 +47,9 @@ spring:
                 - SetPath=/v3/api-docs
 
 # Aggregated Swagger UI at http://localhost:8080/swagger-ui.html — each URL below is
-# served via the OpenAPI rewrite routes above.
+# served via the OpenAPI rewrite routes above. `api-docs` must stay enabled because
+# the UI bootstraps by fetching `/v3/api-docs/swagger-config`; disabling the whole
+# `api-docs` module takes that endpoint offline and the UI fails with 500.
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -58,5 +60,3 @@ springdoc:
         url: /v3/api-docs/product-service
       - name: order-service
         url: /v3/api-docs/order-service
-  api-docs:
-    enabled: false

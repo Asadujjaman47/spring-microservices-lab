@@ -46,6 +46,7 @@ SPRING_PROFILES_ACTIVE=local java -jar user-service/target/user-service-0.1.0-SN
 SPRING_PROFILES_ACTIVE=local java -jar product-service/target/product-service-0.1.0-SNAPSHOT.jar  # :8082
 SPRING_PROFILES_ACTIVE=local java -jar order-service/target/order-service-0.1.0-SNAPSHOT.jar      # :8083
 SPRING_PROFILES_ACTIVE=local java -jar notification-service/target/notification-service-0.1.0-SNAPSHOT.jar  # :8084
+java -jar gateway/target/gateway-0.1.0-SNAPSHOT.jar                                    # :8080
 ```
 
 `SPRING_PROFILES_ACTIVE=local` on the business services activates `db/seed/` repeatable migrations that ship demo users + products.
@@ -65,13 +66,16 @@ curl -X POST http://localhost:8083/api/v1/orders \
   -d "{\"userId\":\"$USER_ID\",\"productId\":\"$PRODUCT_ID\",\"quantity\":1}"
 ```
 
-### Per-service OpenAPI / Swagger
+### OpenAPI / Swagger
 
-| Service | Swagger UI |
+| Scope | Swagger UI |
 |---|---|
-| user-service | <http://localhost:8081/swagger-ui.html> |
-| product-service | <http://localhost:8082/swagger-ui.html> |
-| order-service | <http://localhost:8083/swagger-ui.html> |
+| **Aggregated (via gateway)** | <http://localhost:8080/swagger-ui.html> |
+| user-service (direct) | <http://localhost:8081/swagger-ui.html> |
+| product-service (direct) | <http://localhost:8082/swagger-ui.html> |
+| order-service (direct) | <http://localhost:8083/swagger-ui.html> |
+
+The aggregated UI is the intended entry point — click **Authorize**, paste a JWT from `POST /api/v1/auth/login`, and every service's spec becomes callable through the gateway.
 
 ### UIs (local)
 
@@ -87,7 +91,7 @@ Postgres (5432), Redis (6379), RabbitMQ AMQP (5672) are also exposed on the host
 
 ### Per-service databases
 
-The Postgres container auto-creates three databases on first boot, each with its own owner:
+The Postgres container auto-creates four databases on first boot, each with its own owner:
 
 | Database | Owner | Purpose |
 |---|---|---|
@@ -109,6 +113,7 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 ├── config-repo/               # Spring Cloud Config source (native/git)
 ├── config-service/            # Spring Cloud Config Server (:8888)
 ├── discovery-service/         # Netflix Eureka Server (:8761)
+├── gateway/                   # Spring Cloud Gateway MVC, JWT enforcement (:8080)
 ├── user-service/              # users CRUD, BCrypt (:8081)
 ├── product-service/           # products CRUD, Redis @Cacheable (:8082)
 ├── order-service/             # order placement, Resilience4j CB, event publisher (:8083)
@@ -128,7 +133,7 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 
 ## Status
 
-Phase 4 (async messaging + resilience) complete — order-service places orders over a Eureka-load-balanced `RestClient` to product-service, wraps the stock-reservation call in a Resilience4j circuit breaker with a degraded-fallback, and publishes `OrderCreatedV1` to the `domain.events` topic exchange after commit. notification-service consumes with idempotent dedupe (PK on `event_id`), Spring AMQP retry (exponential backoff, 3 attempts), and a dead-letter queue on final failure. Testcontainers integration tests cover the happy path (Awaitility-verified event publish/consume), CB fallback, duplicate dedupe, and DLQ routing. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
+Phase 5 (gateway + security) complete — Spring Cloud Gateway MVC fronts every service at `:8080`, validates HMAC-signed JWTs on the edge, and routes via Eureka (`lb://...`). `common-lib` ships a shared JWT filter + `OpenApiAutoConfiguration` that rewrites each service's OpenAPI `servers[0].url` to the gateway so the aggregated Swagger UI at `:8080/swagger-ui.html` can drive every downstream with one "Authorize" click. Phase 4 features remain live: order-service places orders over a Eureka-load-balanced `RestClient` to product-service, wraps the stock-reservation call in a Resilience4j circuit breaker with a degraded fallback, and publishes `OrderCreatedV1` to the `domain.events` topic exchange after commit. notification-service consumes with idempotent dedupe (PK on `event_id`), Spring AMQP retry (exponential backoff, 3 attempts), and a dead-letter queue on final failure. Testcontainers integration tests cover gateway auth (401/valid-token/public paths), cache behavior + partial-update eviction (`ProductPatchTests`), CB fallback, duplicate dedupe, and DLQ routing. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
 
 ## License
 

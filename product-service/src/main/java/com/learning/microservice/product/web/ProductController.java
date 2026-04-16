@@ -3,6 +3,7 @@ package com.learning.microservice.product.web;
 import com.learning.microservice.common.api.ApiResponse;
 import com.learning.microservice.product.service.ProductService;
 import com.learning.microservice.product.web.dto.CreateProductRequest;
+import com.learning.microservice.product.web.dto.PatchProductRequest;
 import com.learning.microservice.product.web.dto.ProductResponse;
 import com.learning.microservice.product.web.dto.ReserveStockRequest;
 import com.learning.microservice.product.web.dto.StockReservationResponse;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -51,6 +53,12 @@ public class ProductController {
   public ApiResponse<ProductResponse> update(
       @PathVariable UUID id, @Valid @RequestBody UpdateProductRequest req) {
     return ApiResponse.ok(products.update(id, req), "Product updated");
+  }
+
+  @PatchMapping("/{id}")
+  public ApiResponse<ProductResponse> patch(
+      @PathVariable UUID id, @Valid @RequestBody PatchProductRequest req) {
+    return ApiResponse.ok(products.patch(id, req), "Product patched");
   }
 
   @DeleteMapping("/{id}")
