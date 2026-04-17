@@ -190,11 +190,11 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] **Aggregated Swagger UI** at `localhost:8080/swagger-ui` via springdoc.
 
 ### Phase 6 — Observability + polish
-- [ ] Actuator exposure per profile (open in `local`/`docker`, restricted + basic-auth in `prod`).
-- [ ] Micrometer Tracing → Zipkin; `traceId` propagated into MDC and `ApiResponse`.
-- [ ] Structured JSON logs (`logstash-logback-encoder`) in `docker`/`prod`.
-- [ ] Minimal GitHub Actions workflow: `mvn verify` on push/PR.
-- [ ] Hit 70% line coverage across domain + service packages.
+- [x] Actuator exposure per profile (open in `local`/`docker`, restricted in `prod`).
+- [x] Micrometer Tracing → Zipkin; `traceId` propagated into MDC and `ApiResponse` via Brave's MDC scope decorator.
+- [x] Structured JSON logs (`logstash-logback-encoder`) in `docker`/`prod`.
+- [x] Minimal GitHub Actions workflow: `mvn verify` on push/PR.
+- [x] Hit 70% line coverage on `service` + `domain` packages (JaCoCo BUNDLE rule, infra modules skipped).
 
 ## Key Learning Targets
 - Centralized config + dynamic refresh via `@RefreshScope` and **Spring Cloud Bus** over RabbitMQ (`/actuator/busrefresh`).
