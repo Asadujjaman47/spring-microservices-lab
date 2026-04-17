@@ -42,6 +42,24 @@
       <artifactId>spring-dotenv</artifactId>
     </dependency>
 
+    <!-- Every service gets Micrometer Tracing (Brave impl) + a Zipkin reporter transitively.
+         Brave's MDC scope decorator seeds the `traceId` / `spanId` slots that ApiResponse and
+         the log pattern read — so there's no custom filter to maintain. -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.zipkin.reporter2</groupId>
+      <artifactId>zipkin-reporter-brave</artifactId>
+    </dependency>
+
+    <!-- JSON log encoder used by logback-spring.xml when the docker/prod profiles are active. -->
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
