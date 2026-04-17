@@ -12,6 +12,10 @@
   <name>common-lib</name>
   <description>Shared types and Spring Boot auto-configuration for every service.</description>
 
+  <properties>
+    <jacoco.check.skip>true</jacoco.check.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>

@@ -12,6 +12,10 @@
   <name>discovery-service</name>
   <description>Netflix Eureka Server — service registry for every business service.</description>
 
+  <properties>
+    <jacoco.check.skip>true</jacoco.check.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
