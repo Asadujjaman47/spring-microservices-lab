@@ -81,7 +81,8 @@ In docker-compose this is enforced with `depends_on` + healthchecks.
 - `ApiResponse<T>` record + `ErrorCode` enum + shared `@RestControllerAdvice`.
 - Domain event records (JSON-serialized), versioned by class name (`OrderCreatedV1`).
 - `BaseEntity` with UUIDv7 PK + JPA auditing columns.
-- Correlation-ID filter (propagates `traceId` to MDC).
+- Micrometer Tracing (Brave bridge) + Zipkin reporter — Brave's MDC scope decorator seeds `traceId` / `spanId` for both the `ApiResponse` envelope and the log pattern; no custom filter.
+- Shared `logback-spring.xml` — plain text in local dev, `logstash-logback-encoder` JSON on `docker` / `prod`.
 - JWT-validation filter + Spring Boot auto-configuration — services just add the dep.
 - UTC `ObjectMapper` configuration.
 
@@ -159,7 +160,7 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Parent `pom.xml` with Spring Boot 3.5.13 BOM, Spring Cloud 2025.0.0 BOM, Java 21, Lombok, MapStruct, Spotless + Google Java Format, `spring-boot:build-image` goal.
 - [x] `docker-compose.yml` with Postgres 18.3 (single container, init SQL creates `userdb`/`productdb`/`orderdb`), Redis 8.2, RabbitMQ 4.1 + management UI, **Zipkin**, **pgAdmin**. Internal-only network for business services.
 - [x] `.env.example` documenting every required variable (DB creds, JWT secret, RabbitMQ creds).
-- [x] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, correlation-ID filter, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config.
+- [x] `common-lib`: `ApiResponse<T>`, `ErrorCode` enum, `@RestControllerAdvice`, base event records, JWT-validation filter + auto-config, `BaseEntity` (UUIDv7 + JPA auditing), UTC `ObjectMapper` config. (Distributed-trace MDC correlation was added in Phase 6 via Micrometer Tracing — no custom filter.)
 - [x] Top-level `README.md` with quickstart.
 
 ### Phase 2 — Platform services (config + discovery + bus)
@@ -265,7 +266,7 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 | 31 | Redis client | **Lettuce**. |
 | 32 | RabbitMQ ack mode | **Manual ack** with DLQ on `basicNack`. |
 | 33 | Code style | **Spotless** + **Google Java Format**, enforced on `mvn verify`. |
-| 34 | Actuator exposure | Open in `local`/`docker`; restricted + basic auth in `prod`. |
+| 34 | Actuator exposure | Open in `local`/`docker` (`health,info,refresh,busrefresh,env,metrics`); narrowed to `health,info,metrics` in `prod` with `show-details: never`. (Basic-auth in front of actuator is future work — the current gate is exposure + health detail hiding.) |
 | 35 | Password hashing | **BCrypt** strength 12. |
 | 36 | README | Top-level quickstart after Phase 1. |
 
