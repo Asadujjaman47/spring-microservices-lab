@@ -378,9 +378,96 @@ curl -s http://localhost:8080/v3/api-docs/user-service | jq '.servers'
 # Expect: [{"url":"http://localhost:8080","description":"Gateway"}]
 ```
 
-### 6.10 Tracing (Zipkin)
+### 6.10 Phase 6 — Tracing (Micrometer → Zipkin)
 
-Open http://localhost:9411. Click "Run Query" — every request through the gateway propagates B3 headers, so you can click a trace for `POST /api/v1/orders` and see spans across gateway → order-service → product-service → RabbitMQ publish.
+Distributed tracing is wired through `common-lib` via Micrometer Tracing (Brave bridge) + `zipkin-reporter-brave`. Brave's MDC scope decorator seeds `traceId` / `spanId` on every request — no custom correlation filter — and those slots are read by both the `ApiResponse` envelope and the log pattern.
+
+**Verify all three propagation points with one request:**
+
+```bash
+# 1. Envelope carries traceId
+curl -s http://localhost:8080/api/v1/products -H "Authorization: Bearer $TOKEN" | jq '.traceId'
+# → non-null 32-char hex
+```
+
+```bash
+# 2. Same traceId in the service log line
+#    Tail the product-service terminal — Boot's default pattern prints
+#    [traceId,spanId] next to the thread name when Micrometer Tracing is on the classpath.
+```
+
+```bash
+# 3. Zipkin UI shows the full span graph
+open http://localhost:9411
+#    Run Query → pick the trace → see gateway → product-service spans linked
+```
+
+**Best multi-service demo:** `POST /api/v1/orders` fans out gateway → order-service → product-service (stock reserve) → RabbitMQ publish, so the Zipkin trace has 3+ hops. Sampling is 100% in dev (`config-repo/application.yml`) and 10% in `prod`.
+
+### 6.11 Phase 6 — Actuator per-profile exposure
+
+Actuator surface is defined centrally in `config-repo/application.yml`.
+
+| Profile | Exposed endpoints | Health details |
+|---|---|---|
+| default (`local`, `docker`) | `health,info,refresh,busrefresh,env,metrics` | `when_authorized` — components are hidden for unauthenticated callers (see §6.6) |
+| `prod` | `health,info,metrics` | `never` — components are never shown, even to authenticated callers |
+
+**Local (default profile):**
+
+```bash
+curl -s http://localhost:8081/actuator | jq '._links | keys'
+# → ["busrefresh", "env", "env-toMatch", "health", "health-path", "info", "metrics", "metrics-requiredMetricName", "refresh"]
+
+curl -s http://localhost:8081/actuator/health | jq .
+# status UP (components hidden for unauthenticated callers — same behavior as §6.6)
+```
+
+**Prod profile** — flip one service over to verify the narrowed surface:
+
+```bash
+SPRING_PROFILES_ACTIVE=prod ./mvnw -pl user-service spring-boot:run \
+  -Dspring-boot.run.jvmArguments="-Dspring.flyway.enabled=false"
+```
+
+*Why the `flyway.enabled=false` override:* if the DB already has migration history from a prior `local`/`docker` run, Flyway will refuse to start under `prod` because the seed migrations (`db/seed/*`) are in history but not in `prod`'s classpath scan. That's Flyway protecting you from a dev-seeded prod DB. Disabling Flyway for this one smoke test is fine — the schema is already present; JPA `ddl-auto: validate` passes. See §9 Troubleshooting for the production-clean alternatives.
+
+```bash
+curl -s http://localhost:8081/actuator | jq '._links | keys'
+# → ["health", "health-path", "info", "metrics", "metrics-requiredMetricName"]
+
+curl -s http://localhost:8081/actuator/health | jq .
+# status UP, no components object — `never` is stricter than `when_authorized`:
+# even an authenticated caller with actuator role wouldn't see the details.
+
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8081/actuator/env
+# → 404
+```
+
+Stop it (`Ctrl+C`) and restart the normal `local`-profile JAR when done.
+
+### 6.12 Phase 6 — Structured JSON logs (docker / prod)
+
+Shared `common-lib/src/main/resources/logback-spring.xml` emits:
+
+- **default** (local dev) → Boot's plain console pattern with `[traceId,spanId]` inline.
+- **`docker` or `prod`** → `logstash-logback-encoder` JSON, one record per line, with MDC slots (`traceId`, `spanId`), a `service` field pinned to `spring.application.name`, and ISO-8601 `@timestamp`.
+
+**Quick local flip:**
+
+```bash
+SPRING_PROFILES_ACTIVE=docker ./mvnw -pl user-service spring-boot:run
+```
+
+Each console line is now a single JSON object:
+
+```json
+{"@timestamp":"2026-04-17T…","level":"INFO","logger_name":"…","message":"Started UserServiceApplication…","service":"user-service","traceId":"…","spanId":"…"}
+```
+
+Eyeball: `service` field present, `traceId`/`spanId` populated on request-scoped lines (make a request and grep), `@timestamp` is UTC ISO-8601.
+
+**Via full docker compose:** every service already runs with `SPRING_PROFILES_ACTIVE=docker`, so `docker compose logs user-service | jq .` parses cleanly — that's the shape an ELK/Loki stack would ingest.
 
 ---
 
@@ -402,6 +489,9 @@ This runs:
   - `notification-service`: event consume, duplicate dedupe, DLQ routing
 - `gateway`: `GatewayAuthTests` — public path, protected path, valid token, OpenAPI doc path.
 - Spotless format check (`./mvnw spotless:apply` fixes formatting if this fails).
+- **JaCoCo 70% line-coverage gate** (Phase 6) on `service` + `domain` packages of the four business modules. Infra modules (`common-lib`, `config-service`, `discovery-service`, `gateway`) skip the check via `jacoco.check.skip=true`. HTML report per module: `<module>/target/site/jacoco/index.html`.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same `./mvnw verify` on every push and PR against `develop` / `main`, caches `~/.m2`, and uploads the JaCoCo reports as build artifacts.
 
 ### Single module
 
@@ -443,6 +533,7 @@ docker compose down -v        # stop + wipe volumes (fresh DBs on next up)
 | Seed data missing — no Ada/Alan rows, `products` table empty | Active profile isn't `local`. Log line should read `The following 1 profile is active: "local"`. In IntelliJ: set "Active profiles" in the Run Configuration (§4.5) — **not** via `.env` (spring-dotenv loads too late). From JAR: prepend `SPRING_PROFILES_ACTIVE=local` to the command. |
 | IntelliJ launches service but `.env` values are ignored | Working directory is the module folder, not the project root. `spring-dotenv` reads `.env` relative to the JVM cwd. Fix: set Run Configuration **Working directory** to `$PROJECT_DIR$` (§4.5). |
 | Tempted to run `./mvnw flyway:repair` | `repair` only fixes the `flyway_schema_history` table (stale checksums, half-applied rows). It does **not** create databases or recover from connection errors. For a broken local env, `docker compose down -v && docker compose up -d` resets every DB cleanly. Only use `repair` when Spring Boot logs a `Validate failed: Migration checksum mismatch` after you've edited an already-applied migration. |
+| `SPRING_PROFILES_ACTIVE=prod` boot fails with `Validate failed: Detected applied migration not resolved locally` (usually on a `V9xx__seed_*` file) | The DB already has Flyway history from a `local`/`docker` run where `db/seed/*` was on the classpath. The `prod` profile drops that seed location, so Flyway sees applied migrations with no local match and refuses to start — that's Flyway protecting you from a dev-seeded prod DB. Options: (a) for a quick smoke test of the prod profile (e.g. verifying actuator exposure), append `-Dspring-boot.run.jvmArguments="-Dspring.flyway.enabled=false"` — schema is already there, JPA `validate` passes. (b) to simulate a real prod boot, `docker compose down -v && docker compose up -d` first so the DB starts empty. (c) tolerant middle ground: `-Dspring-boot.run.jvmArguments="-Dspring.flyway.ignore-migration-patterns=*:missing"`. |
 | 401 on every call to :8080 | You're missing `Authorization: Bearer <token>`. Log in via `/api/v1/auth/login` first, or hit a public path (`/api/v1/auth/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/actuator/**`). |
 | Order succeeds but notification-service logs nothing | Confirm RabbitMQ is healthy; check the `notification.order-created` queue has a consumer; check notification-service logs for connection errors. |
 | Circuit breaker never opens | Requires `minimum-number-of-calls: 5` with ≥50% failure rate (see `config-repo/order-service.yml`). Fire 5–10 orders back-to-back while product-service is down. |

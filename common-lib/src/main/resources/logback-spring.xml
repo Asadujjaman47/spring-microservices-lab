@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Shared logging config for every service that depends on common-lib.
+  Decision #20: plain text in local, structured JSON in docker/prod.
+
+  Spring Boot's defaults already inject traceId/spanId into the text pattern whenever
+  micrometer-tracing-bridge-brave is on the classpath — see `defaults.xml`. The JSON encoder
+  picks the same MDC slots up automatically via LogstashEncoder.
+-->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <springProperty name="appName" source="spring.application.name" defaultValue="application"/>
+
+  <springProfile name="docker | prod">
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <includeMdc>true</includeMdc>
+        <customFields>{"service":"${appName}"}</customFields>
+      </encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="!docker &amp; !prod">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+</configuration>

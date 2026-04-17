@@ -9,6 +9,14 @@ management:
   info:
     env:
       enabled: true
+  # Decision #7 — Micrometer Tracing (Brave) → Zipkin. Sample everything in dev;
+  # prod profile drops the ratio to 10%.
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 eureka:
   client:
@@ -35,3 +43,22 @@ common:
 logging:
   level:
     root: INFO
+
+---
+# Decision #34 — production tightens actuator surface and trace sampling.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+  tracing:
+    sampling:
+      probability: 0.1
