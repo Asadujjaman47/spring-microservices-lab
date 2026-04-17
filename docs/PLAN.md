@@ -127,16 +127,17 @@ Redis-RabbitMQ-Micro-service/
 Per-service internal layout:
 ```
 src/main/java/.../<service>/
-├── api/          # controllers, DTOs
-├── domain/       # entities, value objects
-├── repository/   # JPA repositories
-├── service/      # business logic
-├── mapper/       # MapStruct mappers
-├── messaging/    # Rabbit publishers/listeners
-├── client/       # Eureka-aware REST clients
-├── config/       # beans, Redis, Rabbit, security config
-└── Application.java
+├── web/          # controllers, request/response DTOs, MapStruct mappers
+├── service/      # business logic / use cases
+├── domain/       # entities, value objects, repository interfaces
+├── messaging/    # Rabbit publishers/listeners        (if async I/O)
+├── client/       # Eureka-aware REST clients          (if sync outbound I/O)
+├── config/       # Spring wiring: beans, Redis/Rabbit/security config
+└── <Service>Application.java
 ```
+- Services without async or outbound REST simply omit `messaging/` or `client/`.
+- Repository interfaces live alongside their entities in `domain/` — Spring Data provides the adapter at runtime, so a separate `repository/` package is unnecessary ceremony.
+- `web/` groups every HTTP concern (controller + DTO + MapStruct mapper) as one inbound adapter. Splitting them into `api/` + `dto/` + `mapper/` is old-layered-Spring style; keeping them co-located matches ports-and-adapters thinking for the service-as-slice.
 
 ## Phased Roadmap
 
