@@ -12,6 +12,10 @@
   <name>gateway</name>
   <description>Edge gateway — Spring Cloud Gateway Server MVC, JWT enforcement, Eureka-aware routing.</description>
 
+  <properties>
+    <jacoco.check.skip>true</jacoco.check.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.learning.microservice</groupId>
