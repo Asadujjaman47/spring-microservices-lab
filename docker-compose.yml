@@ -1,9 +1,34 @@
-# Local development stack — infra only (Phase 1).
-# Business services are added to this file in Phase 2+.
-# Defaults here are dev-friendly; override via .env for anything real.
+# Local development stack.
+#
+#   docker compose up -d                      # infra only (Postgres/Redis/RabbitMQ/Zipkin/pgAdmin)
+#   docker compose --profile apps up -d       # infra + all 7 Spring services (Phase 7)
+#
+# Business services and platform services live in the `apps` profile so they
+# stay out of the way when you run the JVM locally (`./mvnw spring-boot:run`).
+# Defaults are dev-friendly; override via .env for anything real.
 # See .env.example for the full list of variables.
 
 name: microservices-lab
+
+# Common settings for every Spring service launched by this compose file.
+# Each service merges its own image / ports / env over these defaults.
+x-app-defaults: &app-defaults
+  profiles: [apps]
+  restart: unless-stopped
+  networks:
+    - platform
+
+# Env vars every Spring service needs in-container (decision #23 — `docker` profile).
+x-app-env: &app-env
+  SPRING_PROFILES_ACTIVE: docker
+  EUREKA_URI: http://discovery-service:8761/eureka
+  CONFIG_SERVER_URI: http://config-service:8888
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+  ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+  JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-string-at-least-256-bits}
 
 services:
   postgres:
@@ -96,6 +121,144 @@ services:
         condition: service_healthy
     networks:
       - platform
+
+  # ---------- Spring services (Phase 7, `apps` profile) ---------- #
+  # Build: `./mvnw -pl common-lib -DskipTests install && \
+  #         ./mvnw -pl <service> -DskipTests spring-boot:build-image`
+  # All business-service ports stay internal (decision #30); only platform UIs
+  # (Eureka :8761, Config :8888) and the gateway (:8080) are bound to the host.
+
+  config-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/config-service:0.1.0-SNAPSHOT
+    container_name: ms-config-service
+    environment:
+      <<: *app-env
+      # config-service itself has nothing to pull from config-service; native profile only.
+      SPRING_PROFILES_ACTIVE: native
+      # The repo is bind-mounted below; override search-locations so the image stays env-agnostic.
+      CONFIG_REPO_PATHS: file:/config-repo
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/config-repo:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  discovery-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/discovery-service:0.1.0-SNAPSHOT
+    container_name: ms-discovery-service
+    environment:
+      <<: *app-env
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-service:
+        condition: service_started
+
+  user-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/user-service:0.1.0-SNAPSHOT
+    container_name: ms-user-service
+    environment:
+      <<: *app-env
+      USER_DB_URL: jdbc:postgresql://postgres:5432/userdb
+      USER_DB_USERNAME: userdb_user
+      USER_DB_PASSWORD: ${USERDB_PASSWORD:-userdb_pass}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-service:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+
+  product-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/product-service:0.1.0-SNAPSHOT
+    container_name: ms-product-service
+    environment:
+      <<: *app-env
+      PRODUCT_DB_URL: jdbc:postgresql://postgres:5432/productdb
+      PRODUCT_DB_USERNAME: productdb_user
+      PRODUCT_DB_PASSWORD: ${PRODUCTDB_PASSWORD:-productdb_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-service:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+
+  order-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/order-service:0.1.0-SNAPSHOT
+    container_name: ms-order-service
+    environment:
+      <<: *app-env
+      ORDER_DB_URL: jdbc:postgresql://postgres:5432/orderdb
+      ORDER_DB_USERNAME: orderdb_user
+      ORDER_DB_PASSWORD: ${ORDERDB_PASSWORD:-orderdb_pass}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-service:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+
+  notification-service:
+    <<: *app-defaults
+    image: spring-microservices-lab/notification-service:0.1.0-SNAPSHOT
+    container_name: ms-notification-service
+    environment:
+      <<: *app-env
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/notificationdb
+      NOTIFICATION_DB_USERNAME: notificationdb_user
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATIONDB_PASSWORD:-notificationdb_pass}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-service:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+
+  gateway:
+    <<: *app-defaults
+    image: spring-microservices-lab/gateway:0.1.0-SNAPSHOT
+    container_name: ms-gateway
+    environment:
+      <<: *app-env
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-service:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
 
 networks:
   platform:
