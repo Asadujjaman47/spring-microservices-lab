@@ -35,6 +35,15 @@ docker compose up -d                 # brings up Postgres/Redis/RabbitMQ/Zipkin/
 ./mvnw verify                        # builds every module, runs tests + Spotless
 ```
 
+> **Want everything in containers?** Build buildpack images for the 7 Spring services and bring up the full stack with one command:
+> ```bash
+> ./mvnw -pl common-lib -DskipTests install
+> ./mvnw -pl config-service,discovery-service,gateway,user-service,product-service,order-service,notification-service \
+>        -DskipTests spring-boot:build-image
+> docker compose --profile apps up -d   # 12 containers: 5 infra + 7 Spring
+> ```
+> Full walkthrough — including smoke test and teardown — in [`docs/RUN_AND_TEST.md`](docs/RUN_AND_TEST.md) §4.6.
+
 ### Run the platform (local JVM)
 
 Services must start in order — `config-service` first (others pull their config from it), then `discovery-service`, then business services.
@@ -118,7 +127,6 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 ├── product-service/           # products CRUD, Redis @Cacheable (:8082)
 ├── order-service/             # order placement, Resilience4j CB, event publisher (:8083)
 ├── notification-service/      # event consumer, DLQ + idempotency (:8084)
-├── scripts/                   # smoke scripts
 └── docs/
     ├── PLAN.md                # authoritative plan
     ├── adr/                   # architecture decision records
@@ -133,7 +141,17 @@ Passwords come from `.env` — see `.env.example` for the variable names.
 
 ## Status
 
-Phase 6 (observability + polish) complete — GitHub Actions runs `mvn verify` on every push/PR; JaCoCo enforces 70% line coverage at the BUNDLE level on `service` + `domain` packages (infra modules skipped via per-module `jacoco.check.skip`). Micrometer Tracing (Brave bridge) ships with `common-lib` and reports to Zipkin; Brave's MDC scope decorator seeds `traceId` / `spanId`, which the `ApiResponse` envelope and the log pattern read — no custom correlation filter to maintain. Actuator surface is open in `local`/`docker` (`health,info,refresh,busrefresh,env,metrics`) and narrowed to `health,info,metrics` with hidden health details + 10% trace sampling in `prod`. Shared `logback-spring.xml` emits plain text locally and `logstash-logback-encoder` JSON on the `docker`/`prod` profiles, tagged with the service name. Earlier phases remain live: Spring Cloud Gateway MVC fronts every service at `:8080` with HMAC-signed JWT auth + aggregated Swagger (`:8080/swagger-ui.html`), order-service publishes `OrderCreatedV1` via a Resilience4j-wrapped `RestClient` and the `domain.events` topic exchange, and notification-service consumes with idempotent dedupe, Spring AMQP retry, and a DLQ. See [`docs/PLAN.md`](docs/PLAN.md) for the full roadmap.
+All 7 phases shipped — see [Releases](https://github.com/Asadujjaman47/spring-microservices-lab/releases) and [`docs/PLAN.md`](docs/PLAN.md) for the per-phase acceptance criteria.
+
+| Phase | Tag | Headline |
+|---|---|---|
+| 1 — Foundation | `v0.1.0` | Parent POM, infra Compose, `common-lib` (envelope, errors, JWT filter, auditing) |
+| 2 — Platform services | `v0.2.0` | Config Server + Eureka + Cloud Bus refresh |
+| 3 — Persistence + caching | `v0.3.0` | user/product CRUD, Redis `@Cacheable`, Testcontainers |
+| 4 — Async messaging | `v0.4.0` | order flow, Resilience4j CB, RabbitMQ topic + DLQ + idempotent consumer |
+| 5 — Gateway + security | `v0.5.0` | Cloud Gateway MVC + HMAC-JWT + aggregated Swagger |
+| 6 — Observability + CI | `v0.6.0` | Micrometer Tracing → Zipkin, JSON logs, GitHub Actions, JaCoCo 70% gate |
+| 7 — Containerization | `v0.7.0` | OCI images via Buildpacks, full stack via `--profile apps` |
 
 ## License
 
