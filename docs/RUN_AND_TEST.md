@@ -75,6 +75,8 @@ What comes up:
 | `ms-zipkin` | 9411 | Distributed tracing UI. |
 | `ms-pgadmin` | 5050 | Web DB client. |
 
+> Need the Spring services in containers too? Skip §4 entirely and jump to [§4.6 — full stack in containers](#46-phase-7--alternative-run-the-full-stack-in-containers), which adds the `apps` Compose profile on top of this.
+
 Smoke-check the infra:
 
 ```bash
@@ -166,6 +168,66 @@ The following 1 profile is active: "local"
 ```
 
 If it says `default`, the Run Configuration setting didn't apply — restart after re-saving the config.
+
+### 4.6 Phase 7 — Alternative: run the full stack in containers
+
+Instead of launching JARs or IntelliJ configs, build one OCI image per service (Spring Boot Cloud Native Buildpacks — no Dockerfiles) and bring the whole stack up with a single command. The containerized services sit behind the same docker-compose network as Postgres / Redis / RabbitMQ / Zipkin, so you get a fully self-contained demo environment.
+
+**Build the images** (first run pulls ~500 MB of buildpack layers, ~15 min; repeat runs are minutes):
+
+```bash
+export JAVA_HOME=~/.sdkman/candidates/java/21.0.4-tem
+./mvnw -pl common-lib -DskipTests install
+./mvnw -pl config-service,discovery-service,gateway,user-service,product-service,order-service,notification-service \
+       -DskipTests spring-boot:build-image
+docker images | grep spring-microservices-lab   # 7 images tagged 0.1.0-SNAPSHOT
+```
+
+Image names follow `spring-microservices-lab/<service>:0.1.0-SNAPSHOT` (configured once at the parent POM's `spring-boot-maven-plugin`; decision #29).
+
+**Bring the stack up.** The Spring services live in a Compose `apps` profile so `docker compose up -d` still means "infra only" for the local-JVM workflow above. Opt in explicitly:
+
+```bash
+docker compose --profile apps up -d
+docker compose ps          # 12 containers: 5 infra + 7 Spring
+```
+
+First boot waits on Postgres/Rabbit/Redis healthchecks before starting the Spring services; registration with Eureka takes another 30–60 s.
+
+**Smoke test the containerized stack** (gateway is the only Spring port mapped to the host — business services stay internal, decision #30):
+
+```bash
+TOKEN=$(curl -sf -X POST http://localhost:8080/api/v1/auth/login \
+    -H 'Content-Type: application/json' \
+    -d '{"email":"ada@example.com","password":"Demo@1234"}' | jq -r '.data.token')
+
+curl -sf http://localhost:8761/eureka/apps -H 'Accept: application/json' \
+  | jq -r '.applications.application[].name' | sort
+# → GATEWAY, NOTIFICATION-SERVICE, ORDER-SERVICE, PRODUCT-SERVICE, USER-SERVICE
+
+PRODUCT_ID=$(curl -sf -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/products | jq -r '.data[0].id')
+USER_ID=$(curl -sf -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/users | jq -r '.data[0].id')
+
+curl -sf -X POST http://localhost:8080/api/v1/orders \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"userId\":\"$USER_ID\",\"productId\":\"$PRODUCT_ID\",\"quantity\":1}" | jq
+
+docker compose logs --tail=20 notification-service | tail -5
+# → JSON log line with "service":"notification-service" confirming the event was consumed
+```
+
+**Edit config without rebuilding the image.** The repo's `config-repo/` directory is bind-mounted read-only into config-service at `/config-repo`, overridden via `CONFIG_REPO_PATHS=file:/config-repo`. Edit a YAML and broadcast a refresh:
+
+```bash
+curl -X POST http://localhost:8080/actuator/busrefresh   # hits user-service; any bus-enabled service works
+```
+
+**Teardown:**
+
+```bash
+docker compose --profile apps down        # stop all 12, keep volumes
+docker compose --profile apps down -v     # + wipe DBs for a clean next boot
+```
 
 ---
 
