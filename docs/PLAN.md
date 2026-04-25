@@ -118,11 +118,11 @@ Redis-RabbitMQ-Micro-service/
 ├── notification-service/
 ├── config-repo/                # git-backed config (see Config repo section)
 ├── docker/                     # infra side-files (Postgres init SQL, etc.)
-├── scripts/                    # smoke.sh, migration helpers, etc.
 └── docs/
-    ├── PLAN.md
+    ├── PLAN.md                 # this plan + decision log
+    ├── RUN_AND_TEST.md         # operator/test playbook for all 7 phases
     ├── adr/                    # architecture decision records
-    └── http/                   # .http files for manual/scripted testing
+    └── http/                   # .http file for manual gateway testing
 ```
 
 Per-service internal layout:
@@ -366,56 +366,39 @@ Two layers, complementary:
 
 ### 1. Live reference — Swagger UI (auto-generated)
 - **springdoc-openapi** generates OpenAPI 3.1 from controller annotations.
-- **Aggregated at gateway**: `http://localhost:8080/swagger-ui` shows every service's endpoints in one UI (decision #26).
+- **Aggregated at gateway**: `http://localhost:8080/swagger-ui.html` shows every service's endpoints in one UI (decision #26).
 - Always up to date — if code changes, Swagger changes.
 - Use for **exploration, schema inspection, one-off calls**.
 
-### 2. Version-controlled test collection — `.http` files
-- Plain-text HTTP request files, committed under `docs/http/`, runnable from IntelliJ's built-in HTTP Client (no plugin needed).
-- One file per service + one end-to-end scenario file. Environment variables kept in `docs/http/http-client.env.json` (gitignored if they hold tokens).
-- Use for **scripted manual testing, regression checks, onboarding**.
+### 2. Version-controlled scenario — `docs/http/gateway.http`
+- Single plain-text HTTP file, runnable from IntelliJ's built-in HTTP Client (or VS Code REST Client).
+- Walks the canonical happy path through the **gateway only** (decision #26: gateway is the public surface): login → capture JWT → list products → place order → list orders → unauthenticated 401 → fetch raw OpenAPI spec.
+- The login response is captured into a `token` variable that subsequent requests reuse — no manual copy-paste between requests.
+- Seeded user / product UUIDs (`@ada`, `@product`) match the Flyway seed data (active in `local`/`docker`).
 
-Layout:
-```
-docs/http/
-├── http-client.env.json            # {host, jwt, userId, productId} per env
-├── _auth.http                      # login → capture JWT into env
-├── user-service.http
-├── product-service.http
-├── order-service.http
-├── notification-service.http       # management/health endpoints
-└── e2e-place-order.http            # full scenario: login → create product → place order → verify
-```
-
-Example `order-service.http`:
 ```http
-### Place order (requires JWT from _auth.http)
-POST {{host}}/api/v1/orders
-Authorization: Bearer {{jwt}}
+@gateway = http://localhost:8080
+
+# @name login
+POST {{gateway}}/api/v1/auth/login
 Content-Type: application/json
 
-{
-  "productId": "{{productId}}",
-  "quantity": 2
-}
+{ "email": "ada@example.com", "password": "Demo@1234" }
 
-> {% client.global.set("orderId", response.body.data.id); %}
+> {% client.global.set("token", response.body.data.token); %}
 
-### Get order by id
-GET {{host}}/api/v1/orders/{{orderId}}
-Authorization: Bearer {{jwt}}
+###
+GET {{gateway}}/api/v1/products
+Authorization: Bearer {{token}}
 ```
 
-### Rules
-- **Every new endpoint** ships in the same PR as its `.http` request. No endpoint without a test request.
-- **`http-client.env.json`** has three profiles: `local`, `docker`, `ci`. The `host` switches between direct service and gateway URLs.
-- **Responses captured via `> {% ... %}` scripts** so later requests can chain (e.g., grab an id, reuse in next call).
-- **Swagger stays the source of truth** for schema — `.http` files are the test harness.
-- **`.http` files are also indirect documentation** — a new contributor can read them top-to-bottom to understand the API shape.
+Per-service `.http` files + a multi-environment `http-client.env.json` were scoped but deferred: a single gateway-driven script covers every shipped feature without duplication, and Swagger handles per-service exploration. Add per-service files later if direct (non-gateway) regression testing becomes interesting.
 
-### Optional extras
-- **Postman/Bruno export** later if you want GUI-based testing — springdoc can emit OpenAPI JSON that both tools import.
-- **Smoke script** `scripts/smoke.sh` that curls `/actuator/health` for every service — called from the acceptance check of each phase.
+### Rules
+- **Swagger stays the source of truth** for schema — `gateway.http` is the regression harness.
+- **Use the gateway URL** in any new request (the gateway enforces JWT and aggregates routes; calling services directly bypasses both).
+- **Capture responses via `> {% ... %}`** so later requests can chain (e.g., grab an id, reuse in next call).
+- **Postman/Bruno export** is available if you want GUI-based testing — springdoc emits OpenAPI JSON that both tools import.
 
 ## Git Workflow & Progress Tracking
 
