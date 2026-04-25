@@ -1,6 +1,6 @@
 # Run & Test Guide
 
-End-to-end instructions for starting every service locally and exercising every feature shipped through Phase 5. Written for a fresh clone on Linux/macOS; Windows users should run the same commands in WSL2.
+End-to-end instructions for starting every service and exercising every feature shipped across Phases 1-7. Two paths: run the JVM locally with infra in Docker (§§3-4.5), or run everything in containers (§4.6). Written for a fresh clone on Linux/macOS; Windows users should run the same commands in WSL2.
 
 ---
 
@@ -137,7 +137,7 @@ SPRING_PROFILES_ACTIVE=local java -jar notification-service/target/notification-
 java -jar gateway/target/gateway-0.1.0-SNAPSHOT.jar
 ```
 
-Wait ~10s, then confirm every service appears in Eureka:
+Wait ~30s for Eureka registration to settle, then confirm every service appears:
 
 ```bash
 curl -s http://localhost:8761/eureka/apps -H 'Accept: application/json' | jq '.applications.application[].name'
