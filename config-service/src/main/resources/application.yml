@@ -11,7 +11,9 @@ spring:
       server:
         native:
           # Resolved against JVM cwd. Covers both "run from repo root" and "run from config-service/".
-          search-locations: file:./config-repo,file:../config-repo,classpath:/config-repo
+          # In docker-compose the repo is bind-mounted to /config-repo and overridden via
+          # CONFIG_REPO_PATHS so the OCI image stays environment-agnostic.
+          search-locations: ${CONFIG_REPO_PATHS:file:./config-repo,file:../config-repo,classpath:/config-repo}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}

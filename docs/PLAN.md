@@ -197,6 +197,14 @@ Runs **before any code**. Establishes the repo + branch structure so every later
 - [x] Minimal GitHub Actions workflow: `mvn verify` on push/PR.
 - [x] Hit 70% line coverage on `service` + `domain` packages (JaCoCo BUNDLE rule, infra modules skipped).
 
+### Phase 7 — Containerization
+- [x] Produce OCI images for all 7 Spring services via **Spring Boot Cloud Native Buildpacks** (`./mvnw spring-boot:build-image`); no hand-written Dockerfiles (decision #29).
+- [x] Extend `docker-compose.yml` with service entries for `config-service`, `discovery-service`, `gateway`, and the four business services — wired onto a shared internal network with `depends_on` + healthcheck ordering (config → discovery → business → gateway).
+- [x] Per-service env overrides for the `docker` profile: container-DNS URIs (`CONFIG_URI=http://config-service:8888`, `EUREKA_URI=http://discovery-service:8761/eureka`, Postgres/Redis/RabbitMQ/Zipkin hosts), `SPRING_PROFILES_ACTIVE=docker`, JWT secret from `.env`.
+- [x] Keep port exposure internal-only for business services (decision #30); only gateway (8080) + existing platform/UI ports stay mapped to the host.
+- [x] Acceptance: `docker compose --profile apps up -d` brings the full stack healthy, Eureka lists every service, the end-to-end order flow works through the gateway, and `docker compose logs` shows service-tagged JSON.
+- [x] Companion **"Run the full stack in containers"** section in `docs/RUN_AND_TEST.md` covering build-image, compose up, smoke test, and teardown.
+
 ## Key Learning Targets
 - Centralized config + dynamic refresh via `@RefreshScope` and **Spring Cloud Bus** over RabbitMQ (`/actuator/busrefresh`).
 - Service discovery, client-side load balancing, handling instance failure.
@@ -350,6 +358,7 @@ Each phase ends with a runnable demo. Tag `v0.X.0` and merge `develop` → `main
 | **4 — Async messaging** | `POST /api/v1/orders` → notification-service logs the event within seconds. Kill product-service → circuit breaker opens, fallback returned. Poison message lands in DLQ. |
 | **5 — Gateway + security** | All calls go through gateway (8080) with valid JWT. Aggregated Swagger at `localhost:8080/swagger-ui` shows every service. |
 | **6 — Observability + polish** | Open Zipkin, trace a full order flow across 3 services. JSON logs in `docker` profile. CI green on PR. Coverage ≥ 70%. |
+| **7 — Containerization** | `docker compose --profile apps up -d` brings every service healthy. Eureka (8761) lists all 4 business services + gateway. End-to-end order flow via gateway (8080) works. `docker compose logs gateway` shows service-tagged JSON. |
 
 ## API Testing & Endpoint Documentation
 
