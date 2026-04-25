@@ -188,7 +188,7 @@ Image names follow `spring-microservices-lab/<service>:0.1.0-SNAPSHOT` (configur
 **Bring the stack up.** The Spring services live in a Compose `apps` profile so `docker compose up -d` still means "infra only" for the local-JVM workflow above. Opt in explicitly:
 
 ```bash
-docker compose --profile apps up -d --build
+docker compose --profile apps up -d
 docker compose ps          # 12 containers: 5 infra + 7 Spring
 ```
 
